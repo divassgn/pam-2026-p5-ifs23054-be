@@ -11,5 +11,4 @@ data class UserResponse(
     var username: String = "",
     var createdAt: Instant = Clock.System.now(),
     var updatedAt: Instant = Clock.System.now(),
-    var about: String? = null,
 )
