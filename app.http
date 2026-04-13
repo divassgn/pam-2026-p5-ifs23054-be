@@ -1,6 +1,6 @@
 ## Global Variabel
 #@BaseUrl = https://pam-2026-p5-ifs18005-be.delcom.org:8080
-@BaseUrl = http://pam-2026-p5-ifs23054-be.dipow.fun:8080
+@BaseUrl = http://127.0.0.1:8000
 
 ### ---------------------------------------
 ## Auth
@@ -32,15 +32,6 @@ Content-Type: application/json
     client.global.set("refreshToken", response.body.data.refreshToken);
 %}
 
-### Keluar dari layanan (skip run)
-# @name PostLogout
-POST {{BaseUrl}}/auth/logout
-Content-Type: application/json
-
-{
-  "authToken": "{{authToken}}"
-}
-
 ### Masuk ke layanan
 # @name PostRefreshToken
 POST {{BaseUrl}}/auth/refresh-token
@@ -55,6 +46,15 @@ Content-Type: application/json
     client.global.set("authToken", response.body.data.authToken);
     client.global.set("refreshToken", response.body.data.refreshToken);
 %}
+
+### Keluar dari layanan (skip run)
+# @name PostLogout
+POST {{BaseUrl}}/auth/logout
+Content-Type: application/json
+
+{
+  "authToken": "{{authToken}}"
+}
 
 ### ---------------------------------------
 ## Users

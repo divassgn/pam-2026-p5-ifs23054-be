@@ -25,43 +25,18 @@ class TodoService(
     private val userRepo: IUserRepository,
     private val todoRepo: ITodoRepository
 ) {
+    // Mengambil semua daftar todo saya
     suspend fun getAll(call: ApplicationCall) {
         val user = ServiceHelper.getAuthUser(call, userRepo)
 
         val search = call.request.queryParameters["search"] ?: ""
 
-        // Ambil query parameter untuk pagination & filter
-        val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
-        val perPage = call.request.queryParameters["perPage"]?.toIntOrNull() ?: 10
-        val filter = call.request.queryParameters["filter"] // nilainya bisa: "complete" atau "active"
-        val urgencyStr = call.request.queryParameters["urgency"]
-        val urgencyInt = urgencyStr?.toIntOrNull() // 1, 2, atau 3
-
-        val isComplete = when(filter) {
-            "complete" -> true
-            "active" -> false
-            else -> null // jika "all" atau kosong
-        }
-
-        // Panggil fungsi getAll yang baru
-        val todos = todoRepo.getAll(user.id, search, page, perPage, isComplete, urgencyInt)
+        val todos = todoRepo.getAll(user.id, search)
 
         val response = DataResponse(
             "success",
             "Berhasil mengambil daftar todo saya",
             mapOf(Pair("todos", todos))
-        )
-        call.respond(response)
-    }
-
-    suspend fun getStats(call: ApplicationCall) {
-        val user = ServiceHelper.getAuthUser(call, userRepo)
-        val stats = todoRepo.getHomeStats(user.id)
-
-        val response = DataResponse(
-            "success",
-            "Berhasil mengambil statistik todo",
-            mapOf(Pair("stats", stats))
         )
         call.respond(response)
     }
@@ -110,13 +85,11 @@ class TodoService(
                     val fileName = UUID.randomUUID().toString() + ext
                     val filePath = "uploads/todos/$fileName"
 
-                    withContext(Dispatchers.IO) {
-                        val file = File(filePath)
-                        file.parentFile.mkdirs() // pastikan folder ada
+                    val file = File(filePath)
+                    file.parentFile.mkdirs() // pastikan folder ada
 
-                        part.provider().copyAndClose(file.writeChannel())
-                        request.cover = filePath
-                    }
+                    part.provider().copyAndClose(file.writeChannel())
+                    request.cover = filePath
                 }
 
                 else -> {}

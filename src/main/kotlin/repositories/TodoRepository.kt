@@ -12,23 +12,25 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.lowerCase
 import java.util.*
 
-class TodoRepository : ITodoRepository {
-    override suspend fun getAll(userId: String, search: String, page: Int, perPage: Int, isComplete: Boolean?, urgency: Int?): List<Todo> = suspendTransaction {
-        // DEBUG: semua filter dimatikan sementara, hanya filter userId
-        val query = TodoDAO.find {
-            TodoTable.userId eq UUID.fromString(userId)
+class TodoRepository(private val baseUrl: String) : ITodoRepository {
+    override suspend fun getAll(userId: String, search: String): List<Todo> = suspendTransaction {
+        if (search.isBlank()) {
+            TodoDAO
+                .find {
+                    (TodoTable.userId eq UUID.fromString(userId))
+                }
+                .orderBy(TodoTable.createdAt to SortOrder.DESC)
+                .map{ todoDAOToModel(it, baseUrl) }
+        } else {
+            val keyword = "%${search.lowercase()}%"
+
+            TodoDAO
+                .find {
+                    TodoTable.title.lowerCase() like keyword
+                }
+                .orderBy(TodoTable.title to SortOrder.ASC)
+                .map{ todoDAOToModel(it, baseUrl) }
         }
-
-        query.orderBy(TodoTable.createdAt to SortOrder.DESC)
-            .map(::todoDAOToModel)
-    }
-
-    override suspend fun getHomeStats(userId: String): Map<String, Long> = suspendTransaction {
-        val total = TodoDAO.find { TodoTable.userId eq UUID.fromString(userId) }.count()
-        val completed = TodoDAO.find { (TodoTable.userId eq UUID.fromString(userId)) and (TodoTable.isDone eq true) }.count()
-        val active = total - completed
-
-        mapOf("total" to total, "complete" to completed, "active" to active)
     }
 
     override suspend fun getById(todoId: String): Todo? = suspendTransaction {
@@ -37,7 +39,7 @@ class TodoRepository : ITodoRepository {
                 (TodoTable.id eq UUID.fromString(todoId))
             }
             .limit(1)
-            .map(::todoDAOToModel)
+            .map{ todoDAOToModel(it, baseUrl) }
             .firstOrNull()
     }
 
@@ -48,7 +50,6 @@ class TodoRepository : ITodoRepository {
             description = todo.description
             cover = todo.cover
             isDone = todo.isDone
-            urgency = todo.urgency
             createdAt = todo.createdAt
             updatedAt = todo.updatedAt
         }
@@ -70,7 +71,6 @@ class TodoRepository : ITodoRepository {
             todoDAO.description = newTodo.description
             todoDAO.cover = newTodo.cover
             todoDAO.isDone = newTodo.isDone
-            todoDAO.urgency = newTodo.urgency
             todoDAO.updatedAt = newTodo.updatedAt
             true
         } else {

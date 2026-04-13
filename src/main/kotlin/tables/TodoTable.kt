@@ -11,5 +11,4 @@ object TodoTable : UUIDTable("todos") {
     val isDone = bool("is_done")
     val createdAt = timestamp("created_at")
     val updatedAt = timestamp("updated_at")
-    val urgency = integer("urgency").default(1)
 }
