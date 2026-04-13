@@ -16,7 +16,7 @@ data class AuthRequest(
             "name" to name,
             "username" to username,
             "password" to password,
-            "newPassword" to newPassword,
+            "newPassword" to newPassword
         )
     }
 
